@@ -9,8 +9,8 @@
 BOT_NAME = 'crawler'
 BOT_VERSION = '1.0'
 
-SPIDER_MODULES = ['crawler.spiders']
-NEWSPIDER_MODULE = 'crawler.spiders'
+SPIDER_MODULES = ['spiders']
+NEWSPIDER_MODULE = 'spiders'
 USER_AGENT = '%s/%s' % ('Mozilla', '5.001')
 
 SPIDER_MIDDLEWARES = [

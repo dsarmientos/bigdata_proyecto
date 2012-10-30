@@ -6,7 +6,7 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 
 def extract_filename(url):
     title_re = re.compile(
-        r'(?:http://)?www\.elespectador\.com/noticias/(?:politica|nacional)/articulo-([-\w]+)/?$'
+        r'(?:http://)?www\.eltiempo\.com/(?:politica|justicia)/([-\w]+)/?$'
     )
     match = title_re.match(url)
     if match:
@@ -14,22 +14,29 @@ def extract_filename(url):
 
 
 class ElEspectadorSpider(CrawlSpider):
-    name = "elespectador"
-    allowed_domains = ["www.elespectador.com"]
+    name = "eltiempo"
+    allowed_domains = ["www.eltiempo.com"]
     start_urls = [
-        'http://www.elespectador.com',
-        'http://www.elespectador.com/noticias/politica/',
-        'http://www.elespectador.com/noticias/nacional/',
+        'http://www.eltiempo.com',
+        'http://www.eltiempo.com/politica/',
+        'http://www.eltiempo.com/justicia/',
     ]
     rules = (
         # Parse this pages
         Rule(
-            SgmlLinkExtractor(allow=(r'www.elespectador.com/noticias/(?:politica|nacional)/articulo-[-\w]+/?$')),
+            SgmlLinkExtractor(
+                allow=(
+                    r'www\.eltiempo\.com/(?:politica|justicia)/[-\w]+/?$',),
+                deny=(r'.*CMS[-].*', r'.*\.(?:pdf|PDF)', r'.*MAM[-].*'),
+            ),
             callback='parse_page',
             follow=True),
         # Follow this links
         Rule(
-            SgmlLinkExtractor(allow=(r'www.elespectador.com/\.*',)),
+            SgmlLinkExtractor(
+                allow=(r'www\.eltiempo\.com/.*'),
+                deny=(r'.*CMS[-].*', r'.*\.(?:pdf|PDF)', r'.*MAM[-].*'),
+            ),
             follow=True),
     )
 
