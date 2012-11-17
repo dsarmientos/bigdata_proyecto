@@ -7,7 +7,6 @@
 #
 
 BOT_NAME = 'crawler'
-BOT_VERSION = '1.0'
 
 SPIDER_MODULES = ['spiders']
 NEWSPIDER_MODULE = 'spiders'
