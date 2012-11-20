@@ -4,31 +4,27 @@ Created on Nov 19, 2012
 @author: Daniel Sarmiento
 '''
 
+import pdb
 import datetime
-import codecs
 import htmlentitydefs
-import lxml.html
 import re
 import xml.sax.saxutils
 
+import lxml.html
+import simplejson
+
 
 class BaseParser(object):
-    def __init__(self, filename, encoding='utf-8'):
-        self.filename = filename
+    def __init__(self, html, encoding):
+        self.raw_html = html
         self.encoding = encoding
         self.doc = None
-
-    def get_raw_html(self):
-        html = ''
-        with codecs.open(self.filename, 'r', self.encoding) as infile:
-            html = infile.read()
-        return html
 
     def get_html(self):
         entity2unicode = {}
         for name, point in htmlentitydefs.name2codepoint.items():
             entity2unicode['&%s;' % name] = unichr(point)
-        unicode_html = xml.sax.saxutils.unescape(self.get_raw_html(),
+        unicode_html = xml.sax.saxutils.unescape(self.raw_html,
                                                  entity2unicode)
         return unicode_html.strip()
 
@@ -42,18 +38,32 @@ class BaseParser(object):
 
 
 class ElEspectadorParser(BaseParser):
+    def __init__(self, html, encoding='utf-8'):
+        super(ElEspectadorParser, self).__init__(html, encoding)
+    
     def as_json(self):
-        pass
+        date = self.extract_date().isoformat()
+        noticia = {
+            'media': 'elespectador',
+            'date': date,
+            'section': self.extract_section(),
+            'title': self.extract_title(),
+            'content': self.extract_content(),
+        }
+        return simplejson.dumps(noticia)
+        
 
     def extract_content(self):
         doc = self.get_html_doc()
         content_div = doc.xpath('//div[@class="content_nota"]')[0]
         p_list = content_div.findall('p')
+        if not p_list:
+            p_list = content_div.findall('div')
         ws_re = re.compile('\s\s+')
         content_ = lambda p: p.text_content().strip()
         p_text_list = [ws_re.sub(' ', content_(p)) for p in p_list]
         content = unicode('\n\n'.join(p_text_list))
-        return content
+        return content.strip()
 
     def extract_title(self):
         doc = self.get_html_doc()
@@ -71,8 +81,9 @@ class ElEspectadorParser(BaseParser):
     def extract_date(self):
         doc = self.get_html_doc()
         datetime_re = re.compile(
-            r'([0-9]{2})\s+(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)'
-            r'\s+([0-9]{4})\s+[-]\s+([0-9]{2}):([0-9]{2})\s+(am|pm)',
+            r'([0-9]{1,2})\s+'
+            r'(ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic)[a-z]*'
+            r'\s+([0-9]{4})\s+[-]\s+([0-9]{1,2}):([0-9]{1,2})\s+(am|pm)',
             re.I)
         h4 = doc.xpath('//div[@class="header_nota"]/h4')[0]
         match = datetime_re.search(h4.text_content())
