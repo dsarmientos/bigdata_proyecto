@@ -25,6 +25,7 @@ class NoticiaMapper(object):
         yield key, noticia
 
     def parse(self, html):
+        html = html.decode('utf-8')
         parser = noticias_parser.ElEspectadorParser(html)
         noticia = parser.as_json()
         return simplejson.dumps(noticia)
@@ -48,7 +49,6 @@ class CongresistasMapper(object):
 
 if __name__ == "__main__":
     job = dumbo.Job()
-    job.additer(html_mapper, reducer)
     job.additer(NoticiaMapper, dumbo.lib.identityreducer)
-    job.additer(CongresistasMapper, dumbo.lib.identityreducer)
+#    job.additer(CongresistasMapper, dumbo.lib.identityreducer)
     job.run()
