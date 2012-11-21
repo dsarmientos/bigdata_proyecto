@@ -21,7 +21,10 @@ def reducer(key, value):
 
 class NoticiaMapper(object):
     def __call__(self, key, value):
-        noticia = self.parse(value)
+        try:
+            noticia = self.parse(value)
+        except Exception:
+            noticia = '{"error":%s}' % key
         yield key, noticia
 
     def parse(self, html):
