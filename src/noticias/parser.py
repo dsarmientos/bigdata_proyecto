@@ -89,7 +89,7 @@ class ElEspectadorParser(BaseParser):
         match = datetime_re.search(h4.text_content())
         if match:
             month_name2num = dict(zip(
-                ('ene', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'ago',
+                ('ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago',
                  'sep', 'oct', 'nov', 'dic'),
                 range(1, 13)))
             day, month_name, year, hour, minute, am_pm = match.groups()
