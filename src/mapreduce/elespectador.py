@@ -27,7 +27,7 @@ class NoticiaMapper(object):
     def parse(self, html):
         parser = noticias_parser.ElEspectadorParser(html)
         noticia = parser.as_json()
-        return simplejson.dumps(noticia)
+        return noticia
 
 class CongresistasMapper(object):
     def __call__(self, key, value):
@@ -35,7 +35,6 @@ class CongresistasMapper(object):
         yield key, congresistas
 
     def find_congresistas(self, noticia):
-        noticia = simplejson.loads(noticia)
         noticia = simplejson.loads(noticia)
         content = utils.remove_accents(noticia['content'])
         automata = scripts.crear_automata.get_automata()
