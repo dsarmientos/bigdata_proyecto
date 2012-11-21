@@ -1,20 +1,44 @@
 import re
 import pickle
 
-i = 0
+import ahocorasick
 
-def main():
+import unicodedata
+
+
+def remove_accents(input_str):
+    nkfd_form = unicodedata.normalize('NFKD', unicode(input_str))
+    only_ascii = nkfd_form.encode('ASCII', 'ignore')
+    return only_ascii
+
+def get_automata():
     gaceta = crear_gaceta()
+    automata = ahocorasick.KeywordTree()
+    agregar_nombres(automata, gaceta)
+    automata.make()
+    return automata
     
 
 def crear_gaceta():
     with open('lista_congresistas.pickle', 'r') as infile:
         congresistas = pickle.load(infile)
     for congresista in congresistas:
-        primer_apellido, segundo_apellido = separar_apellidos(congresista['apellidos'])
+        expandir_nombres(congresista)
+    return congresistas
+        
 
-def separar_apellidos(apellidos):
-    mostrar = False
+def expandir_nombres(congresista):
+    primer_apellido, segundo_apellido = separar_nombres(
+            congresista['apellidos'])
+    primer_nombre, segundo_nombre = separar_nombres(
+            congresista['nombres'])
+    congresista['primer_nombre'] = primer_nombre
+    congresista['segundo_nombre'] = segundo_nombre
+    congresista['primer_apellido'] = primer_apellido
+    congresista['segundo_apellido'] = segundo_apellido
+
+
+def separar_nombres(nombres):
     def reemplazo(match):
         izq = match.group(1).strip()
         sep = match.group(2).strip().lower()
@@ -26,24 +50,32 @@ def separar_apellidos(apellidos):
         txt = '%s %s_%s' % (izq, sep, der)
         return txt.strip()
     de_re = re.compile('(^|\w+\s+)(de la|de los|del?)\s+(\w+)', re.I)
-    if de_re.search(apellidos):
-        apellidos = de_re.sub(reemplazo, apellidos)
-        mostrar = True
-    lista_apellidos = re.split(r'\s+', apellidos)
-    primer_apellido = ''
-    segundo_apellido = ''
-    palabras = len(lista_apellidos)
+    if de_re.search(nombres):
+        nombres = de_re.sub(reemplazo, nombres)
+    lista_nombres = re.split(r'\s+', nombres)
+    primer_nombre = ''
+    segundo_nombre = ''
+    palabras = len(lista_nombres)
     if palabras >= 1:
-        primer_apellido = lista_apellidos[0].replace('_', ' ')
+        primer_nombre = lista_nombres[0].replace('_', ' ')
     if palabras >= 2:
-        segundo_apellido = lista_apellidos[1].replace('_', ' ')
-    if mostrar:
-        print apellidos.replace('_', ' '), '[%s|%s]' % (primer_apellido, segundo_apellido)
-    return primer_apellido, segundo_apellido
-    
-    
+        segundo_nombre = lista_nombres[1].replace('_', ' ')
+    return primer_nombre, segundo_nombre
 
 
-if __name__ == '__main__':
-    main()
-    
+def agregar_nombres(automata, gaceta):
+    for congresista in gaceta:
+        automata.add(
+           remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
+                          congresista['primer_apellido'],
+                          congresista['segundo_apellido']))
+         )
+        automata.add(
+           remove_accents(u'%s %s' % (congresista['nombres'], 
+                       congresista['apellidos']))
+         )
+
+
+def guardar_automata(automata):
+    with open('automata.pickle', 'w') as outfile:
+        pickle.dump(automata, outfile)
