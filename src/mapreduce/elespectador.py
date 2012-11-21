@@ -4,6 +4,7 @@ import dumbo
 import simplejson
 
 import noticias.parser as noticias_parser
+import noticias.noticia_pb2 as noticia_pb2
 import scripts.crear_automata
 import utils
 
@@ -26,24 +27,23 @@ class NoticiaMapper(object):
 
     def parse(self, html):
         parser = noticias_parser.ElEspectadorParser(html)
-        noticia = parser.as_json()
-        return simplejson.dumps(noticia)
+        noticia = parser.as_protobuf_string()
+        return noticia
 
 class CongresistasMapper(object):
     def __call__(self, key, value):
         congresistas = self.find_congresistas(value)
         yield key, congresistas
 
-    def find_congresistas(self, noticia):
-        noticia = simplejson.loads(noticia)
-        noticia = simplejson.loads(noticia)
-        content = utils.remove_accents(noticia['content'])
+    def find_congresistas(self, noticia_str):
+        noticia = noticia_pb2.Article()
+        noticia.ParseFromString(noticia_str)
+        content = utils.remove_accents(noticia.content)
         automata = scripts.crear_automata.get_automata()
         congresistas = []
         for i in automata.findall(content):
             congresistas.append(content[i[0]:i[1]])
         return congresistas 
-
 
 
 if __name__ == "__main__":

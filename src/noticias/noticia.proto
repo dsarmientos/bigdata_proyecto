@@ -1,0 +1,7 @@
+message Article {
+    optional string title = 1;
+    optional string content = 2;
+    optional string date = 3;
+    optional string media = 4;
+    optional string section = 5;
+}
