@@ -4,7 +4,6 @@ Created on Nov 19, 2012
 @author: Daniel Sarmiento
 '''
 
-import pdb
 import datetime
 import htmlentitydefs
 import re
@@ -12,6 +11,8 @@ import xml.sax.saxutils
 
 import lxml.html
 import simplejson
+
+import noticia_pb2
 
 
 class BaseParser(object):
@@ -40,7 +41,7 @@ class BaseParser(object):
 class ElEspectadorParser(BaseParser):
     def __init__(self, html, encoding='utf-8'):
         super(ElEspectadorParser, self).__init__(html, encoding)
-    
+
     def as_json(self):
         date = self.extract_date().isoformat()
         noticia = {
@@ -51,7 +52,18 @@ class ElEspectadorParser(BaseParser):
             'content': self.extract_content(),
         }
         return simplejson.dumps(noticia)
-        
+
+
+    def as_protobuf_string(self):
+        date = self.extract_date().isoformat()
+        noticia = noticia_pb2.Article()
+        noticia.media = 'elespectador'
+        noticia.date = date
+        noticia.section = self.extract_section()
+        noticia.title = self.extract_title()
+        noticia.content = self.extract_content()
+        return noticia.SerializeToString()
+
 
     def extract_content(self):
         doc = self.get_html_doc()

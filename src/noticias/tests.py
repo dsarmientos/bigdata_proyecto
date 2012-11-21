@@ -11,6 +11,8 @@ import unittest
 
 import simplejson
 
+import noticia_pb2
+
 class Test(unittest.TestCase):
 
     def setUp(self):
@@ -70,6 +72,17 @@ class Test(unittest.TestCase):
         for field, value in noticia.items():
             self.assertEqual(value, expected_noticia[field])
 
+    def test_as_protobuf_string(self):
+        noticia = noticia_pb2.Article()
+        noticia.ParseFromString(self.parser.as_protobuf_string())
+        date = self.expected_date.isoformat()
+        fields = ('media', 'date', 'title', 'content', 'section')
+        expected_noticia = dict(
+            zip(fields,
+                ('elespectador', date, self.expected_title,
+                self.expected_content, self.expected_section))
+        )
+        self.assertEqual(noticia.content, expected_noticia['content'])
 
 if __name__ == "__main__":
     #import sys;sys.argv = ['', 'Test.testName']
