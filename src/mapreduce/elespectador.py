@@ -21,7 +21,6 @@ class NoticiaMapper(object):
         html = html.decode('utf-8')
         parser = noticias_parser.ElEspectadorParser(html)
         noticia = parser.as_protobuf_string()
-        noticia = parser.as_json()
         return noticia
 
 class CongresistasMapper(object):
