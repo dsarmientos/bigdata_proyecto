@@ -40,7 +40,7 @@ class BaseParser(object):
 class ElEspectadorParser(BaseParser):
     def __init__(self, html, encoding='utf-8'):
         super(ElEspectadorParser, self).__init__(html, encoding)
-    
+
     def as_json(self):
         date = self.extract_date().isoformat()
         noticia = {
@@ -51,7 +51,7 @@ class ElEspectadorParser(BaseParser):
             'content': self.extract_content(),
         }
         return simplejson.dumps(noticia)
-        
+
 
     def extract_content(self):
         doc = self.get_html_doc()
