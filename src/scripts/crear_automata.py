@@ -18,10 +18,8 @@ def get_automata():
     
 
 def crear_gaceta():
-    with open('lista_congresistas.pickle', 'r') as infile:
+    with open('lista_congresistas_exp.pickle', 'r') as infile:
         congresistas = pickle.load(infile)
-    for congresista in congresistas:
-        expandir_nombres(congresista)
     return congresistas
         
 
@@ -71,8 +69,9 @@ def agregar_nombres(automata, gaceta):
            utils.remove_accents(u'%s %s' % (congresista['nombres'], 
                        congresista['apellidos']))
          )
+        automata.add(
+           utils.remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
+                          congresista['segundo_nombre'],
+                          congresista['primer_apellido']))
+         )
 
-
-def guardar_automata(automata):
-    with open('automata.pickle', 'w') as outfile:
-        pickle.dump(automata, outfile)
