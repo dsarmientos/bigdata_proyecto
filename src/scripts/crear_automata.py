@@ -3,7 +3,7 @@ import pickle
 
 import ahocorasick
 
-import utils.remove_accents as remove_accents
+import utils
 
 de_re = re.compile('(^|\w+\s+)(de la|de los|del?)\s+(\w+)', re.I)
 separator_re = re.compile(r'\s+')
@@ -63,12 +63,12 @@ def separar_nombres(nombres):
 def agregar_nombres(automata, gaceta):
     for congresista in gaceta:
         automata.add(
-           remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
+           utils.remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
                           congresista['primer_apellido'],
                           congresista['segundo_apellido']))
          )
         automata.add(
-           remove_accents(u'%s %s' % (congresista['nombres'], 
+           utils.remove_accents(u'%s %s' % (congresista['nombres'], 
                        congresista['apellidos']))
          )
 

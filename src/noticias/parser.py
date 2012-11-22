@@ -40,7 +40,7 @@ class BaseParser(object):
 class ElEspectadorParser(BaseParser):
     def __init__(self, html, encoding='utf-8'):
         super(ElEspectadorParser, self).__init__(html, encoding)
-    
+
     def as_json(self):
         date = self.extract_date().isoformat()
         noticia = {
@@ -51,7 +51,7 @@ class ElEspectadorParser(BaseParser):
             'content': self.extract_content(),
         }
         return simplejson.dumps(noticia)
-        
+
 
     def extract_content(self):
         doc = self.get_html_doc()
@@ -89,7 +89,7 @@ class ElEspectadorParser(BaseParser):
         match = datetime_re.search(h4.text_content())
         if match:
             month_name2num = dict(zip(
-                ('ene', 'feb', 'mar', 'apr', 'may', 'jun', 'jul', 'ago',
+                ('ene', 'feb', 'mar', 'abr', 'may', 'jun', 'jul', 'ago',
                  'sep', 'oct', 'nov', 'dic'),
                 range(1, 13)))
             day, month_name, year, hour, minute, am_pm = match.groups()
