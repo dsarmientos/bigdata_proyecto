@@ -3,13 +3,11 @@ import pickle
 
 import ahocorasick
 
-import unicodedata
+import utils
 
+de_re = re.compile('(^|\w+\s+)(de la|de los|del?)\s+(\w+)', re.I)
+separator_re = re.compile(r'\s+')
 
-def remove_accents(input_str):
-    nkfd_form = unicodedata.normalize('NFKD', unicode(input_str))
-    only_ascii = nkfd_form.encode('ASCII', 'ignore')
-    return only_ascii
 
 def get_automata():
     gaceta = crear_gaceta()
@@ -49,10 +47,9 @@ def separar_nombres(nombres):
         der = match.group(3).strip()
         txt = '%s %s_%s' % (izq, sep, der)
         return txt.strip()
-    de_re = re.compile('(^|\w+\s+)(de la|de los|del?)\s+(\w+)', re.I)
     if de_re.search(nombres):
         nombres = de_re.sub(reemplazo, nombres)
-    lista_nombres = re.split(r'\s+', nombres)
+    lista_nombres = separator_re.split(nombres)
     primer_nombre = ''
     segundo_nombre = ''
     palabras = len(lista_nombres)
@@ -66,12 +63,12 @@ def separar_nombres(nombres):
 def agregar_nombres(automata, gaceta):
     for congresista in gaceta:
         automata.add(
-           remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
+           utils.remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
                           congresista['primer_apellido'],
                           congresista['segundo_apellido']))
          )
         automata.add(
-           remove_accents(u'%s %s' % (congresista['nombres'], 
+           utils.remove_accents(u'%s %s' % (congresista['nombres'], 
                        congresista['apellidos']))
          )
 
