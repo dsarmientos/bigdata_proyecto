@@ -1,4 +1,3 @@
-import codecs
 import hashlib
 import logging
 
@@ -10,26 +9,16 @@ import noticias.noticia_pb2 as noticia_pb2
 import scripts.crear_automata
 
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
-
-
-def html_mapper(key, value):
-    with codecs.open(value, 'r', 'utf-8') as infile:
-        html = infile.read()
-    yield value, html
-
-
-def html_reducer(key, value):
-    html = value.next()
-    yield key, html
+r = redis.StrictRedis(host='bigdata-12-a', port=6379, db=0)
 
 
 class NoticiaMapper(object):
-    def __call__(self, key, value):
+    def __call__(self, filename, html):
         try:
-            noticia_str = self.parse(value)
+            html = html.decode('utf-8')
+            noticia_str = self.parse(html)
         except Exception:
-            raise
+            logging.info('could not parse file "%s"' % filename)
         else:
             noticia = noticia_pb2.Article()
             noticia.ParseFromString(noticia_str)
@@ -64,6 +53,5 @@ class NoticiaReducer(object):
 
 if __name__ == "__main__":
     job = dumbo.Job()
-    job.additer(html_mapper, html_reducer)
     job.additer(NoticiaMapper, NoticiaReducer)
     job.run()
