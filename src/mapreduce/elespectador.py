@@ -31,8 +31,7 @@ class NoticiaMapper(object):
         noticia.ParseFromString(noticia_str)
         automata = scripts.crear_automata.get_automata()
         content = noticia.content
-        return automata.query(content):
-
+        return automata.query(content)
 
 
 class NoticiaReducer(object):
