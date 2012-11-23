@@ -35,13 +35,13 @@ class NoticiaReducer(object):
         content = utils.remove_accents(noticia.content)
         automata = scripts.crear_automata.get_automata()
         congresistas = []
-        for i in automata.findall(content):
-            congresistas.append(content[i[0]:i[1]])
+        for match in automata.query(content):
+            i = match[0]
+            congresistas.append((content[i[0]:i[1]], match[1]))
         return congresistas
 
 
 if __name__ == "__main__":
     job = dumbo.Job()
     job.additer(NoticiaMapper, NoticiaReducer)
-    #job.additer(CongresistasMapper, dumbo.lib.identityreducer)
     job.run()
