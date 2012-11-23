@@ -35,7 +35,8 @@ class NoticiaReducer(object):
         noticia.ParseFromString(noticia_str)
         automata = scripts.crear_automata.get_automata()
         congresistas = []
-        for match in automata.query(noticia.content):
+        content = noticia.content
+        for match in automata.query(content):
             i = match[0]
             congresistas.append((content[i[0]:i[1]], match[1]))
         return congresistas
