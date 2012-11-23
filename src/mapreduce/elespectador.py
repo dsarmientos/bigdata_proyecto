@@ -11,10 +11,12 @@ import utils
 class NoticiaMapper(object):
     def __call__(self, key, value):
         try:
-            noticia = self.parse(value)
+            noticia_str = self.parse(value)
         except Exception:
             logging.error('could not parse %s' % key)
         else:
+            noticia = noticia_pb2.Article()
+            noticia.ParseFromString(noticia_str)
             match_list = self.find_congresistas(noticia)
             for match in match_list:
                 i = match[0]
@@ -26,9 +28,7 @@ class NoticiaMapper(object):
         noticia = parser.as_protobuf_string()
         return noticia
 
-    def find_congresistas(self, noticia_str):
-        noticia = noticia_pb2.Article()
-        noticia.ParseFromString(noticia_str)
+    def find_congresistas(self, noticia):
         automata = scripts.crear_automata.get_automata()
         content = noticia.content
         return automata.query(content)
