@@ -1,7 +1,7 @@
 import re
 import pickle
 
-import ahocorasick
+import esm
 
 import utils
 
@@ -11,17 +11,19 @@ separator_re = re.compile(r'\s+')
 
 def get_automata():
     gaceta = crear_gaceta()
-    automata = ahocorasick.KeywordTree()
+    automata = esm.Index()
     agregar_nombres(automata, gaceta)
-    automata.make()
+    automata.fix()
+    with open('withh.pickle', 'w') as outf:
+        pickle.dump(gaceta, outf)
     return automata
-    
+
 
 def crear_gaceta():
-    with open('lista_congresistas_exp.pickle', 'r') as infile:
+    with open('lista_congresistas_exp2.pickle', 'r') as infile:
         congresistas = pickle.load(infile)
     return congresistas
-        
+
 
 def expandir_nombres(congresista):
     primer_apellido, segundo_apellido = separar_nombres(
@@ -60,18 +62,16 @@ def separar_nombres(nombres):
 
 def agregar_nombres(automata, gaceta):
     for congresista in gaceta:
-        automata.add(
-           utils.remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
-                          congresista['primer_apellido'],
-                          congresista['segundo_apellido']))
-         )
-        automata.add(
-           utils.remove_accents(u'%s %s' % (congresista['nombres'], 
-                       congresista['apellidos']))
-         )
-        automata.add(
-           utils.remove_accents(u'%s %s %s' % (congresista['primer_nombre'], 
-                          congresista['segundo_nombre'],
-                          congresista['primer_apellido']))
-         )
-
+        h1 = u'%s %s %s' % (congresista['primer_nombre'],
+                            congresista['primer_apellido'],
+                            congresista['segundo_apellido'])
+        h2 = u'%s %s' % (congresista['nombres'],
+                         congresista['apellidos'])
+        h3 = u'%s %s %s' % (congresista['primer_nombre'],
+                            congresista['segundo_nombre'],
+                            congresista['primer_apellido'])
+        heuristicas = set([h1, h2, h3])
+        key = congresista['key']
+        congresista['heuristicas'] = tuple(
+            [utils.remove_accents(h) for h in heuristicas])
+        [automata.enter(h, key) for h in congresista['heuristicas']]

@@ -29,6 +29,7 @@ class NoticiaMapper(object):
         noticia = parser.as_json()
         return noticia
 
+
 class CongresistasMapper(object):
     def __call__(self, key, value):
         congresistas = self.find_congresistas(value)
@@ -39,10 +40,10 @@ class CongresistasMapper(object):
         content = utils.remove_accents(noticia['content'])
         automata = scripts.crear_automata.get_automata()
         congresistas = []
-        for i in automata.findall(content):
-            congresistas.append(content[i[0]:i[1]])
-        return congresistas 
-
+        for match in automata.query(content):
+            i = match[0]
+            congresistas.append((content[i[0]:i[1]], match[1]))
+        return congresistas
 
 
 if __name__ == "__main__":
