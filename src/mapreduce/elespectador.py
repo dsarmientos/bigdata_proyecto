@@ -23,9 +23,10 @@ class NoticiaMapper(object):
         noticia = parser.as_protobuf_string()
         return noticia
 
-class CongresistasMapper(object):
-    def __call__(self, key, value):
-        congresistas = self.find_congresistas(value)
+class NoticiaReducer(object):
+    def __call__(self, key, values):
+        noticia = values.next() #solo una pagina por llave
+        congresistas = self.find_congresistas(noticia)
         yield key, congresistas
 
     def find_congresistas(self, noticia_str):
@@ -41,6 +42,6 @@ class CongresistasMapper(object):
 
 if __name__ == "__main__":
     job = dumbo.Job()
-    job.additer(NoticiaMapper, dumbo.lib.identityreducer)
-    job.additer(CongresistasMapper, dumbo.lib.identityreducer)
+    job.additer(NoticiaMapper, NoticiaReducer)
+    #job.additer(CongresistasMapper, dumbo.lib.identityreducer)
     job.run()
