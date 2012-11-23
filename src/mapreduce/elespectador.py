@@ -15,7 +15,10 @@ class NoticiaMapper(object):
         except Exception:
             logging.error('could not parse %s' % key)
         else:
-            yield key, noticia
+            match_list = self.find_congresistas(noticia)
+            for match in match_list:
+                i = match[0]
+                yield key, '%s:%s' % (noticia.content[i[0]:i[1]], match[1])
 
     def parse(self, html):
         html = html.decode('utf-8')
@@ -23,23 +26,18 @@ class NoticiaMapper(object):
         noticia = parser.as_protobuf_string()
         return noticia
 
-
-class NoticiaReducer(object):
-    def __call__(self, key, values):
-        noticia = values.next() #solo una pagina por llave
-        congresistas = self.find_congresistas(noticia)
-        yield key, congresistas
-
     def find_congresistas(self, noticia_str):
         noticia = noticia_pb2.Article()
         noticia.ParseFromString(noticia_str)
         automata = scripts.crear_automata.get_automata()
-        congresistas = []
         content = noticia.content
-        for match in automata.query(content):
-            i = match[0]
-            congresistas.append((content[i[0]:i[1]], match[1]))
-        return congresistas
+        return automata.query(content):
+
+
+
+class NoticiaReducer(object):
+    def __call__(self, key, values):
+        yield key, ' '.join(values)
 
 
 if __name__ == "__main__":
