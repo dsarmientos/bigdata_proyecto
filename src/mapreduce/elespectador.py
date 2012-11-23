@@ -1,5 +1,5 @@
 import hashlib
-import logging
+import heapq
 
 import dumbo
 import redis
@@ -26,9 +26,7 @@ class NoticiaMapper(object):
             if match_list:
                 noticia_id = self.save_noticia(noticia)
                 for match in match_list:
-                    i = match[0]
-                    yield noticia_id, '%s:%s' % (noticia.content[i[0]:i[1]],
-                                                 match[1])
+                    yield noticia_id, match
 
     def parse(self, html):
         parser = noticias_parser.ElEspectadorParser(html)
@@ -47,8 +45,30 @@ class NoticiaMapper(object):
 
 
 class NoticiaReducer(object):
-    def __call__(self, key, values):
-        yield key, ' '.join(values)
+    def __call__(self, key, match_list):
+        heap = []
+        for match in match_list:
+            heapq.heappush(heap,
+                           (match[0][0], match[0][1], match[1]))
+        for match in self.no_overlaps_iter(heap):
+            yield key, match 
+    
+    def no_overlaps_iter(self, match_list):
+        match = heapq.heappop(match_list)
+        while True:
+            assert(match[0] < match[1])
+            if not len(match_list):
+                yield match
+                break
+            next_match = heapq.heappop(match_list)
+            if next_match[0] < match[1]:
+                assert(match[2] == next_match[2])
+                match = (match[0], max(next_match[1], match[1]), match[2])
+            else:
+                if next_match[0] > match[1]:
+                    yield match
+                match = next_match
+        raise StopIteration
 
 
 if __name__ == "__main__":
