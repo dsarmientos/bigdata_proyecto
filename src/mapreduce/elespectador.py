@@ -23,6 +23,7 @@ class NoticiaMapper(object):
         noticia = parser.as_protobuf_string()
         return noticia
 
+
 class NoticiaReducer(object):
     def __call__(self, key, values):
         noticia = values.next() #solo una pagina por llave
@@ -32,10 +33,9 @@ class NoticiaReducer(object):
     def find_congresistas(self, noticia_str):
         noticia = noticia_pb2.Article()
         noticia.ParseFromString(noticia_str)
-        content = utils.remove_accents(noticia.content)
         automata = scripts.crear_automata.get_automata()
         congresistas = []
-        for match in automata.query(content):
+        for match in automata.query(noticia.content):
             i = match[0]
             congresistas.append((content[i[0]:i[1]], match[1]))
         return congresistas

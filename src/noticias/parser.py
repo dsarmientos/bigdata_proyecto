@@ -13,6 +13,7 @@ import lxml.html
 import simplejson
 
 import noticia_pb2
+import utils
 
 
 class BaseParser(object):
@@ -75,7 +76,7 @@ class ElEspectadorParser(BaseParser):
         content_ = lambda p: p.text_content().strip()
         p_text_list = [ws_re.sub(' ', content_(p)) for p in p_list]
         content = unicode('\n\n'.join(p_text_list))
-        return content.strip()
+        return utils.remove_accents(content.strip())
 
     def extract_title(self):
         doc = self.get_html_doc()
