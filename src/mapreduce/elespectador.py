@@ -1,5 +1,8 @@
+import codecs
+import collections
 import hashlib
 import heapq
+import string
 import sys
 import traceback
 
@@ -59,11 +62,22 @@ class NoticiaReducer(object):
         noticia = self.get_noticia(noticia_id)
         sentence_tree = self.build_sentence_tree(noticia.content)
         matches_heap = self.build_heap(match_list)
+        sentence_match = {}
         for match in self.no_overlaps_iter(matches_heap):
-            if match[2] is not None:
-                sentence = sentence_tree.findRange(match[:2])
-                assert len(sentence) == 1
-                yield sentence[0], match[2]
+            person_id, match_range = match[2], match[:2]
+            if person_id is not None:
+                sentences = sentence_tree.findRange(match_range)
+                assert len(sentences) == 1
+                sentence = sentences[0]
+                sentence_id = hashlib.sha1(sentence).hexdigest()[:10]
+                if sentence_id not in sentence_match:
+                    sentence_match[sentence_id] = {'sentence': sentence,
+                                                   'people_ids': set((person_id,))}
+                else:
+                    sentence_match[sentence_id]['people_ids'].add(person_id)
+        for sentence_id, match in sentence_match.iteritems():
+            yield sentence_id, (match['sentence'],
+                                list(match['people_ids']))
 
     def build_heap(self, match_list):
         heap = []
@@ -116,12 +130,44 @@ class NoticiaReducer(object):
 
 
 class OracionMapper(object):
-    def __call__(self, noticia_id, match):
-        pass
+    def __call__(self, sentence_id, sentence_people_list):
+        self.sentence = sentence_people_list[0].rstrip('.').lower()
+        people_list = sentence_people_list[1]
+        self.pipe = r.pipeline()
+        #check if not already indexed
+        self.pipe.sadd('indexados:oraciones', sentence_id)
+        self.index_sentence(people_list)
+        self.pipe.execute()
+        yield self.sentence, people_list
+
+    def index_sentence(self, people_list):
+        stop_words = [w.decode('utf-8') for w in nltk.corpus.stopwords.words(
+            'spanish')]
+        terms_tf = self.get_terms_tf(stop_words)
+        for person_id in people_list:
+            self.add_terms_to(terms_tf, person_id)
+            self.pipe.sadd('indexados:congresistas', person_id)
+
+    def add_terms_to(self, terms_tf, person_id):
+        for term, tf in terms_tf.iteritems():
+            self.pipe.zincrby('indice:congresista:' + str(person_id),
+                               term, tf)
+
+    def get_terms_tf(self, stopwords):
+        tokenizer = nltk.RegexpTokenizer('\s+', gaps=True)
+        trans_table = dict(
+            (ord(symbol), u'') for symbol in string.punctuation)
+        terms_tf = collections.defaultdict(float)
+        for token in tokenizer.tokenize(self.sentence):
+            token = unicode(token)
+            token = token.translate(trans_table).strip()
+            if token not in stopwords and len(token) > 1:
+                terms_tf[token] += 1
+        return terms_tf
 
 
 if __name__ == "__main__":
     job = dumbo.Job()
     job.additer(NoticiaMapper, NoticiaReducer)
-    #job.additer(OracionMapper, OracionReducer)
+    job.additer(OracionMapper, dumbo.lib.identityreducer)
     job.run()
