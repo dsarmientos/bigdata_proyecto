@@ -63,9 +63,10 @@ class NoticiaReducer(object):
         sentence_tree = self.build_sentence_tree(noticia.content)
         matches_heap = self.build_heap(match_list)
         for match in self.no_overlaps_iter(matches_heap):
-            sentence = sentence_tree.findRange(match[:2])
-            assert len(sentence) == 1
-            yield sentence[0], match[2]
+            if match[2] is not None:
+                sentence = sentence_tree.findRange(match[:2])
+                assert len(sentence) == 1
+                yield sentence[0], match[2]
         
     def build_heap(self, match_list):
         heap = []
