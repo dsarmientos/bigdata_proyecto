@@ -4,11 +4,13 @@ import sys
 import traceback
 
 import dumbo
+import nltk
 import redis
 
 import noticias.parser as noticias_parser
 import noticias.noticia_pb2 as noticia_pb2
 import scripts.crear_automata
+import datastructures.interval_tree
 
 
 r = redis.StrictRedis(host='bigdata-12-a', port=6379, db=0)
@@ -52,15 +54,38 @@ class NoticiaMapper(object):
 
 
 class NoticiaReducer(object):
-    def __call__(self, key, match_list):
-        self.key = key
+    def __call__(self, noticia_id, match_list):
+        self.key = noticia_id
+        noticia = self.get_noticia(noticia_id)
+        sentence_tree = self.build_sentence_tree(noticia.content)
+        matches_heap = self.build_heap(match_list)
+        for match in self.no_overlaps_iter(matches_heap):
+            if match[2] is not None:
+                sentence = sentence_tree.findRange(match[:2])
+                assert len(sentence) == 1
+                yield sentence[0], match[2]
+
+    def build_heap(self, match_list):
         heap = []
         for match in match_list:
             heapq.heappush(heap,
                            (match[0][0], match[0][1], match[1]))
-        for match in self.no_overlaps_iter(heap):
-            if match[2] is not None:
-                yield key, match
+        return heap
+
+    def get_noticia(self, noticia_id):
+        noticia = noticia_pb2.Article()
+        serialized_noticia = r.get('noticia:' + noticia_id)
+        noticia.ParseFromString(serialized_noticia)
+        return noticia
+
+    def build_sentence_tree(self, content):
+        sent_detector = nltk.data.load('tokenizers/punkt/spanish.pickle')
+        span_list = sent_detector.span_tokenize(content)
+        sent_intervals = [(span[0], span[1],
+                           content[span[0]:span[1]]) for span in span_list]
+        tree = datastructures.interval_tree.IntervalTree(sent_intervals,
+                                                        0, 1, 0, len(content))
+        return tree
 
     def no_overlaps_iter(self, match_list):
         match = heapq.heappop(match_list)
@@ -72,14 +97,17 @@ class NoticiaReducer(object):
             next_match = heapq.heappop(match_list)
             if next_match[0] < match[1]:
                 if match[2] != next_match[2]:
+                    # TODO: Improve NER. This type of errors are currently caused by
+                    # duplicate entity matches.
+                    # For now, mark as None and ignore.
+                    entity_id = None
                     r.sadd('errores:hadoop',
                            'match %s - %s overlap in noticia %s' % (match,
                                                                     next_match,
                                                                     self.key))
-                    # Esto se debe a homonimos. Marcar como None ignorar
-                    match = (match[0], max(next_match[1], match[1]), None)
                 else:
-                    match = (match[0], max(next_match[1], match[1]), match[2])
+                    entity_id = match[2]
+                match = (match[0], max(next_match[1], match[1]), entity_id)
             else:
                 if next_match[0] > match[1]:
                     yield match
@@ -87,7 +115,13 @@ class NoticiaReducer(object):
         raise StopIteration
 
 
+class OracionMapper(object):
+    def __call__(self, noticia_id, match):
+        pass
+
+
 if __name__ == "__main__":
     job = dumbo.Job()
     job.additer(NoticiaMapper, NoticiaReducer)
+    #job.additer(OracionMapper, OracionReducer)
     job.run()
