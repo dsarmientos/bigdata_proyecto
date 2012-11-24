@@ -12,6 +12,7 @@ import noticias.parser as noticias_parser
 import noticias.noticia_pb2 as noticia_pb2
 import scripts.crear_automata
 import datastructures.interval_tree
+import utils
 
 
 r = redis.StrictRedis(host='localhost', port=6379, db=0)
@@ -131,25 +132,44 @@ class NoticiaReducer(object):
 class OracionMapper(object):
     def __call__(self, sentence_id, sentence_people_list):
         self.sentence = sentence_people_list[0].rstrip('.').lower()
-        people_list = sentence_people_list[1]
+        people_list = self.get_people_list(
+            sentence_people_list[1])
         self.pipe = r.pipeline()
         self.index_sentence(people_list)
         self.pipe.sadd('indexados:oraciones', sentence_id)
         self.pipe.execute()
-        yield sentence_id, people_list
+        yield self.sentence, people_list
+
+    def get_people_list(self, id_list):
+        pipe = r.pipeline()
+        for id_ in id_list:
+            pipe.hget('congresista:' + str(id_),
+                      'nombre_ascii')
+        names = pipe.execute()
+        return zip(id_list, names)
+            
         
     def index_sentence(self, people_list):
-        stop_words = [w.decode('utf-8') for w in nltk.corpus.stopwords.words(
-            'spanish')]
+        stop_words = self.load_stop_words()
         terms_tf = self.get_terms_tf(stop_words)
-        for person_id in people_list:
-            self.add_terms_to(terms_tf, person_id)
+        for person_id, person_name in people_list:
+            self.add_terms_to(terms_tf, person_id, person_name)
             self.pipe.sadd('indexados:congresistas', person_id)
-        
-    def add_terms_to(self, terms_tf, person_id):
+            
+    def load_stop_words(self):
+        stop_words = [
+            utils.remove_accents(w.decode('utf-8'))
+            for w in nltk.corpus.stopwords.words(
+                'spanish')]
+        return stop_words
+
+    def add_terms_to(self, terms_tf, person_id, person_name):
+        congresista_id = str(person_id)
+        palabras_nombre = [p.lower() for p in person_name.split(' ')]
         for term, tf in terms_tf.iteritems():
-            self.pipe.zincrby('indice:congresista:' + str(person_id),
-                               term, tf)
+            if term not in palabras_nombre:
+                self.pipe.zincrby('indice:congresista:' + str(congresista_id),
+                                  term, tf)
 
     def get_terms_tf(self, stopwords):
         tokenizer = nltk.RegexpTokenizer('\s+', gaps=True)
