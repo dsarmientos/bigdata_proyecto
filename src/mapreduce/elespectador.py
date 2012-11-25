@@ -175,7 +175,7 @@ class OracionMapper(object):
                 if term not in palabras_nombre:
                     pipe.zincrby(person_terms, term, tf)
                     pipe.zincrby(global_terms, term, tf)
-                    pipe.zincrby(terms_index+'term', person_id, 1)
+                    pipe.zincrby(terms_index + term, person_id, 1)
 
             pipe.sadd(person_sentences, self.sentence_id)
             pipe.delete(term)
