@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8">
+    <title>Taller 2: Análisis de Sentimientos</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="">
+    <meta name="author" content="">
+
+    <!-- Le styles -->
+    <link href="/static/css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+      .working { background:url('/static/img/indicator.gif') no-repeat right center }
+    </style>
+    <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
+
+    <!-- Le HTML5 shim, for IE6-8 support of HTML5 elements -->
+    <!--[if lt IE 9]>
+      <script src="http://html5shim.googlecode.com/svn/trunk/html5.js"></script>
+    <![endif]-->
+
+    <!-- Le fav and touch icons -->
+    <link rel="shortcut icon" href="/static/ico/favicon.ico">
+  </head>
+
+  <body>
+
+    <div class="navbar navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#">RSS Sentiment Analysis</a>
+          <div class="nav-collapse">
+            <ul class="nav">
+              <li class="active"><a href="#">Home</a></li>
+            </ul>
+          </div><!--/.nav-collapse -->
+        </div>
+      </div>
+    </div>
+
+    <div class="container">
+
+      <div class="row">
+       <div class="span12">
+       <div id="word-cloud"></div>
+       
+      </div>
+
+      <hr>
+
+      <footer>
+        <p>Daniel Sarmiento Suárez. Universidad de Los Andes 2012</p>
+      </footer>
+
+    </div> <!-- /container -->
+
+    <!-- Le javascript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/static/js/lib/jquery.js"></script>
+    <script src="/static/js/lib/bootstrap.min.js"></script>
+    <script src="/static/js/lib/d3.v2.min.js"></script>
+	<script src="/static/js/d3/d3.layout.cloud.js"></script>
+	<script>
+	  var fill = d3.scale.category20();
+	
+	  d3.layout.cloud().size([300, 300])
+	      .words([
+	        "Hello", "world", "normally", "you", "want", "more", "words",
+	        "than", "this"].map(function(d) {
+	        return {text: d, size: 10 + Math.random() * 90};
+	      }))
+	      .rotate(function() { return ~~(Math.random() * 2) * 90; })
+	      .font("Impact")
+	      .fontSize(function(d) { return d.size; })
+	      .on("end", draw)
+	      .start();
+	
+	  function draw(words) {
+	    d3.select("#word-cloud").append("svg")
+	        .attr("width", 300)
+	        .attr("height", 300)
+	      .append("g")
+	        .attr("transform", "translate(150,150)")
+	      .selectAll("text")
+	        .data(words)
+	      .enter().append("text")
+	        .style("font-size", function(d) { return d.size + "px"; })
+	        .style("font-family", "Impact")
+	        .style("fill", function(d, i) { return fill(i); })
+	        .attr("text-anchor", "middle")
+	        .attr("transform", function(d) {
+	          return "translate(" + [d.x, d.y] + ")rotate(" + d.rotate + ")";
+	        })
+	        .text(function(d) { return d.text; });
+	  }
+</script>
+
+  </body>
+</html>
