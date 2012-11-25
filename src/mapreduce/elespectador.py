@@ -133,13 +133,10 @@ class NoticiaReducer(object):
 class OracionMapper(object):
     def __call__(self, sentence_id, sentence_people_list):
         self.sentence = sentence_people_list[0].rstrip('.').lower()
+        self.sentence_id = sentence_id
         people_list = self.get_people_list(
             sentence_people_list[1])
-        self.pipe = r.pipeline()
-        #check if not already indexed
-        self.pipe.sadd('indexados:oraciones', sentence_id)
         self.index_sentence(people_list)
-        self.pipe.execute()
         yield self.sentence, people_list
 
     def get_people_list(self, id_list):
@@ -147,15 +144,15 @@ class OracionMapper(object):
         for id_ in id_list:
             pipe.hget('congresista:' + str(id_),
                       'nombre_ascii')
-        names = pipe.execute()
-        return zip(id_list, names)
+        people_list = [(str(id_), name) for id_, name in zip(
+            id_list, pipe.execute())]
+        return people_list
 
     def index_sentence(self, people_list):
         stop_words = self.load_stop_words()
         terms_tf = self.get_terms_tf(stop_words)
         for person_id, person_name in people_list:
             self.add_terms_to(terms_tf, person_id, person_name)
-            self.pipe.sadd('indexados:congresistas', person_id)
 
     def load_stop_words(self):
         stop_words = [
@@ -165,12 +162,29 @@ class OracionMapper(object):
         return stop_words
 
     def add_terms_to(self, terms_tf, person_id, person_name):
-        congresista_id = str(person_id)
         palabras_nombre = [p.lower() for p in person_name.split(' ')]
-        for term, tf in terms_tf.iteritems():
-            if term not in palabras_nombre:
-                self.pipe.zincrby('indice:congresista:' + str(congresista_id),
-                                  term, tf)
+        pipe = r.pipeline()
+        person_sentences = 'indexados:congresistas:%s:oraciones' % (
+                            person_id)
+        person_terms = 'indice:congresista:' + person_id
+        global_terms = 'indice:global'
+        terms_index = 'indice:term:'
+        try:
+            pipe.watch(person_sentences)
+            for term, tf in terms_tf.iteritems():
+                if term not in palabras_nombre:
+                    pipe.zincrby(person_terms, term, tf)
+                    pipe.zincrby(global_terms, term, tf)
+                    pipe.zincrby(terms_index+'term', person_id, 1)
+
+            pipe.sadd(person_sentences, self.sentence_id)
+            pipe.delete(term)
+            pipe.execute()
+        except redis.WatchError:
+            #oracion ya estaba indexada para esta persona
+            pass
+        finally:
+            pipe.reset()
 
     def get_terms_tf(self, stopwords):
         tokenizer = nltk.RegexpTokenizer('\s+', gaps=True)
