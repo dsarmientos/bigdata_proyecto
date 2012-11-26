@@ -14,6 +14,7 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
 def home(request):
+    random_person = get_random_person()
     words = get_top_n_terms(250, True)
     people_list = get_top_n_people(9, True)
     id_list = [p[0] for p in people_list]
@@ -28,7 +29,21 @@ def home(request):
     
     return render_to_response(
         'index.html',
-        {'words': simplejson.dumps(words), 'congresistas':people})
+        {'words': simplejson.dumps(words), 'congresistas':people,
+         'random_person':random_person})
+
+
+def get_random_person():
+    pk = r.srandmember('indexados:congresista')
+    pipe = r.pipeline(False)
+    pipe.hmget('congresista:' + pk, 'nombres', 'apellidos')
+    pipe.zrevrange('indice:congresista:' + pk, 0, 0)
+    pipe.zrevrank('indice:congresista', pk)
+    result = pipe.execute()
+    nombres, top_word, rank = result
+    return {'pk': pk, 'nombre': ' '.join(nombres), 'top_word':top_word[0],
+            'rank': rank}
+    
 
 
 def get_top_n_terms(num_terms, withscores=False):
