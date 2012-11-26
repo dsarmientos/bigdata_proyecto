@@ -14,13 +14,51 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 
 
 def home(request):
-    word_count = r.zrevrange('indice:global', 0, 249, True)
+    words = get_top_n_terms(250, True)
+    people_list = get_top_n_people(9, True)
+    id_list = [p[0] for p in people_list]
+    names = get_people_name(id_list)
+    people_words = get_top_people_words(id_list)
+    people = []
+    for i, person in enumerate(people_list):
+        people.append(
+            {'nombre':' '.join(names[i]), 'pk':person[0], 'num_palabras':person[1],
+             'palabras': people_words[i]})
+    logger.info(people)
+    
+    return render_to_response(
+        'index.html',
+        {'words': simplejson.dumps(words), 'congresistas':people})
+
+
+def get_top_n_terms(num_terms, withscores=False):
+    assert int(num_terms) > 0
+    word_count = r.zrevrange('indice:global', 0, num_terms - 1, withscores)
     max_f = max((wc[1] for wc in word_count))
     f = lambda f: (f / max_f)
     word_list = [{'text':wc[0], 'size':f(wc[1])} for wc in word_count]
-    logger.info(word_list[:15])
     for w in word_list:
         assert w['size'] <= 1 and w['size'] > 0
-    words = simplejson.dumps(word_list);
-    return render_to_response('index.html', {'words':words})
+    return word_list
     
+
+def get_top_n_people(num_people, withscores=False):
+    assert int(num_people) > 0
+    people_score = r.zrevrange('indice:congresista', 0, num_people - 1, withscores)
+    return people_score
+
+
+def get_people_name(id_list):
+    pipe = r.pipeline(False)
+    for id_ in id_list:
+        pipe.hmget('congresista:' + id_, 'nombres', 'apellidos')
+    names = pipe.execute()
+    return names
+
+
+def get_top_people_words(id_list, withscores=True):
+    pipe = r.pipeline(False)
+    for id_ in id_list:
+        pipe.zrevrange('indice:congresista:' + id_, 0, 10, withscores)
+    words = pipe.execute()
+    return words
