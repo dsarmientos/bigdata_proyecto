@@ -15,6 +15,20 @@
         padding-bottom: 40px;
       }
       .working { background:url('/static/img/indicator.gif') no-repeat right center }
+      .bar rect {
+		  fill: steelblue;
+		  shape-rendering: crispEdges;
+		}
+		
+		.bar text {
+		  fill: #fff;
+		}
+		
+	  .axis path, .axis line {
+		  fill: none;
+		  stroke: #000;
+		  shape-rendering: crispEdges;
+		}
     </style>
     <link href="/static/css/bootstrap-responsive.css" rel="stylesheet">
 
@@ -39,9 +53,9 @@
           <div class="nav-collapse">
             <ul class="nav">
               <li><a href="{% url home %}">Home</a></li>
-              <li class="active"><a href="#">Treemap</a></li>
+              <li><a href="{% url treemap %}">Treemap</a></li>
               <li><a href="{% url combochart %}">Combochart</a></li>
-              <li><a href="{% url histogram %}">Histogram</a></li>
+              <li class="active"><a href="#">Histogram</a></li>
             </ul>
           </div><!--/.nav-collapse -->
           <form class="navbar-search pull-right" action="{% url buscar %}">
@@ -52,8 +66,8 @@
     </div>
 
     <div class="container">
-    <h1>Treemap Partidos Políticos</h1>
-	      <div id="treemap" style="width: 900px; height: 500px;"></div>
+    <h1>Histograma Palabras</h1>
+	      <div id="word_histogram"></div>
 
       <hr>
 
@@ -68,25 +82,62 @@
     <!-- Placed at the end of the document so the pages load faster -->
     <script src="/static/js/lib/jquery.js"></script>
     <script src="/static/js/lib/bootstrap.min.js"></script>
-    <script type="text/javascript" src="https://www.google.com/jsapi"></script>
-	<script type='text/javascript'>
-	   google.load("visualization", "1", {packages:["treemap"]});
-      google.setOnLoadCallback(drawChart);
-      function drawChart() {
-        // Create and populate the data table.
-        var data = google.visualization.arrayToDataTable({{treemap|safe}}
-        );
+    <script src="/static/js/lib/d3.v2.min.js"></script>
+    <script type="text/javascript">
+		var values = {{words|safe}};
 
-        // Create and draw the visualization.
-        var tree = new google.visualization.TreeMap(document.getElementById('treemap'));
-        tree.draw(data, {
-          minColor: '#f00',
-          midColor: '#ddd',
-          maxColor: '#0d0',
-          headerHeight: 15,
-          fontColor: 'black',
-          showScale: true});
-        }
+// A formatter for counts.
+var formatCount = d3.format(",.0f");
+
+var margin = {top: 10, right: 30, bottom: 30, left: 30},
+    width = 960 - margin.left - margin.right,
+    height = 500 - margin.top - margin.bottom;
+
+var x = d3.scale.linear()
+    .domain([0, 1])
+    .range([0, width]);
+
+// Generate a histogram using twenty uniformly-spaced bins.
+var data = d3.layout.histogram()
+    .bins(x.ticks(20))
+    (values);
+
+var y = d3.scale.linear()
+    .domain([0, d3.max(data, function(d) { return d.y; })])
+    .range([height, 0]);
+
+var xAxis = d3.svg.axis()
+    .scale(x)
+    .orient("bottom");
+
+var svg = d3.select("#word_histogram").append("svg")
+    .attr("width", width + margin.left + margin.right)
+    .attr("height", height + margin.top + margin.bottom)
+  .append("g")
+    .attr("transform", "translate(" + margin.left + "," + margin.top + ")");
+
+var bar = svg.selectAll(".bar")
+    .data(data)
+  .enter().append("g")
+    .attr("class", "bar")
+    .attr("transform", function(d) { return "translate(" + x(d.x) + "," + y(d.y) + ")"; });
+
+bar.append("rect")
+    .attr("x", 1)
+    .attr("width", x(data[0].dx) - 1)
+    .attr("height", function(d) { return height - y(d.y); });
+
+bar.append("text")
+    .attr("dy", ".75em")
+    .attr("y", 6)
+    .attr("x", x(data[0].dx) / 2)
+    .attr("text-anchor", "middle")
+    .text(function(d) { return formatCount(d.y); });
+
+svg.append("g")
+    .attr("class", "x axis")
+    .attr("transform", "translate(0," + height + ")")
+    .call(xAxis);
     </script>
 
   </body>
