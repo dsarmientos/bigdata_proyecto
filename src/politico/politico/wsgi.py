@@ -14,7 +14,11 @@ framework.
 
 """
 import os
+import sys
 
+path = '/home/bigdata/proyecto/src/politico'
+if path not in sys.path:
+    sys.path.append(path)
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "politico.settings")
 
 # This application object is used by any WSGI server configured to use this

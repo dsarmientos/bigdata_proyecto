@@ -17,7 +17,7 @@ import nltk
 
 logger = logging.getLogger('console')
 
-r = redis.StrictRedis(host='localhost', port=6379, db=0)
+r = redis.StrictRedis(host='bigdata-12-f', port=6379, db=0)
 
 
 def home(request):
@@ -70,7 +70,7 @@ def get_top_n_terms(num_terms, withscores=False):
     for w in word_list:
         assert w['size'] <= 1 and w['size'] > 0
     return word_list
-    
+
 
 def get_top_n_people(num_people, withscores=False):
     assert int(num_people) > 0
