@@ -8,6 +8,9 @@ urlpatterns = patterns('',
     # Examples:
     url(r'^$', 'politico.views.home', name='home'),
     url(r'^treemap/$', 'politico.views.treemap', name='treemap'),
+    url(r'^combochar/$', 'politico.views.combochart', name='combochart'),
+    url(r'^congresista/(\d+)$', 'politico.views.perfil_congresista', name='perfil_congresista'),
+    url(r'^buscar/$', 'politico.views.buscar', name='buscar'),
     # url(r'^politico/', include('politico.foo.urls')),
 
     # Uncomment the admin/doc line below to enable admin documentation:

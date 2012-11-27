@@ -2,7 +2,7 @@
 <html lang="es">
   <head>
     <meta charset="utf-8">
-    <title>Asociación de Palabras</title>
+    <title>{{congresista.nombre}} - Asociación de Palabras</title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="description" content="">
     <meta name="author" content="">
@@ -35,10 +35,11 @@
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
             <span class="icon-bar"></span>
           </a>
-          <a class="brand" href="#">Proyecto Final BigData</a>
+          <a class="brand" href="{% url home %}">Proyecto Final BigData</a>
           <div class="nav-collapse">
             <ul class="nav">
-              <li class="active"><a href="#">Home</a></li>
+              <li><a href="{% url home %}">Home</a></li>
+              <li class="active"><a href="#">Perfil Congresistas</a></li>
             </ul>
           </div><!--/.nav-collapse -->
           <form class="navbar-search pull-right" action="{% url buscar %}">
@@ -49,111 +50,41 @@
     </div>
 
     <div class="container">
-
-      <div class="row">
-	       <div class="span4">
+    <div class="row">
+	       <div class="span8">
 		       <div class="row">
-		       	   <br />
-		       	   <div style="width:300p; height:310px;"> <!-- Visualizations container -->
+	       <div class="span1">
+	       <p><img class="media-object" src="{{congresista.imagen}}" width="64" height="64" alt="{{congresista.nombre}}" /></p>
+				       </div>
+	       <div class="span5"><h1>{{congresista.nombre}}</h1></div>
+				       </div>
+				       <hr />
+		       <div class="row">
+		       <div class="span4">
 				       <div id="word-cloud"></div>
-				       <div id="word-table" style="display:none;"></div>
-			       </div>
-			       <br />
-			       	   <div class="btn-toolbar">
-			       	   <div class="btn-group">
-					       	   <a class="btn active" href="#" id="cloud-btn">
-						       	   <i class="icon-star-empty"></i>Cloud</a>
-					       	   <a class="btn" href="#" id="table-btn">
-					       	       <i class="icon-th"></i>Tabla</a>
-				       	   </div>
-			       	   </div>
-		       </div>
-		       <div class="row">
-		       	   <h3>Conzca sus congresistas</h3>
-		       	   <div class="span3 well">
-				       <div class="row">
-					       <div class="span1">
-						       <ul class="thumbnails">
-								  <li>
-								    <a href="{% url perfil_congresista random_person.pk %}" class="thumbnail">
-									    <img src="{{random_person.imagen}}" alt="{{random_person.imagen}}" width="95" height="95" />
-								    </a>
-								  </li>
-								</ul>
-					       </div>
-					       <div class="span2">
-						       <p><strong>{{random_person.nombre}}</strong></p>
-						       <p>Número <span class="label">{{random_person.rank}}</span> en popularidad</p>
-						       <p>Palabra más asociada <span class="badge badge-success">{{random_person.top_word}}</span></p>
-							    <a href="{% url perfil_congresista random_person.pk %}" class="btn btn-primary">Ver perfil</a>
-					       </div>
+				       </div>
+		       <div class="span4">
+				       <div id="word-table"></div>
 				       </div>
 			       </div>
 		       </div>
-	      </div>
-	       <div class="span8">
-		       <div class="row">
-		       	   <h3>Ranking Popularidad</h3>
-		       	   <br />
-		       		<ul class="media-list" id="cps">
-		       		{% for congresista in congresistas %}
-		       		  {% if forloop.counter0 < 3 %}
-		       			<li class="media" id="cp-{{forloop.counter0}}">
-		       			{% else %}
-		       			<li class="media" id="cp-{{forloop.counter0}}" style="display:none">
-		       			{% endif %}
+	       <div class="span3">
+	       	   <h3>Similares</h3>
+	       	   <ul class="media-list">
+	       	   {% for congresista in related %}
+		       			<li class="media">
 		       			    <a class="pull-left" href="{% url perfil_congresista congresista.pk %}">
 			       			    <img class="media-object" src="{{congresista.imagen}}" width="64" height="64" alt="{{congresista.nombre}}" />
 		       			    </a>
-		       			    <h4 class="media-heading">{{forloop.counter}}. {{congresista.nombre}}</h4>
-		       			    <p>
-		       			    {% for palabra in congresista.palabras %}
-			       			    <span class="badge badge-info" title="Asociada {{palabra.1}} veces" style="cursor:hand; cursor:pointer;">
-			       			    {{palabra.0}}</span>
-		       			    {% endfor %}
-		       			    </p>
+		       			    <h5 class="media-heading"><a href="{% url perfil_congresista congresista.pk %}">{{congresista.nombre}}</a></h5>
 		       			</li>
-	       			{% endfor %}
-		       		</ul>
-		       		<div class="pagination pagination-centered" id="popular-pag">
-					  <ul>
-					    <li class="active" id="pag-1"><a href="#">1</a></li>
-					    <li id="pag-2"><a href="#">2</a></li>
-					    <li id="pag-3"><a href="#">3</a></li>
-					  </ul>
-					</div>
-	       		</div>
-		       <div class="row">
-		       <h3>Visualizaciones</h3>
-			       <div class="span4">
-				       <ul class="thumbnails">
-					       <li>
-					        <div class="thumbnail">
-						      <img src="/static/img/treemap_main.png" alt="Treemap">
-						      <h3>Treemap</h3>
-						      <p>Visualización <em>treemap</em> del porcentaje de palabras por partidos políticos y sus congresistas.
-						      <a class="btn btn-primary" href="{% url treemap %}">Ver</a></p>
-						    </div>
-						    </li>
-					    </ul>
-			       </div>
-			       <div class="span4">
-				       <ul class="thumbnails">
-					       <li>
-					        <div class="thumbnail">
-						      <img src="/static/img/bubblechart_main.png" alt="Bubble chart">
-						      <h3>Palabras por Partido</h3>
-						      <p>Número total de palabras y promedio por partido. Contribución del congresista más mencionado al total.
-						      <a class="btn btn-primary" href="{% url combochart %}">Ver</a></p>
-						    </div>
-						    </li>
-					    </ul>
-			       </div>
-		      </div>
+	       	   {% endfor %}
+	       	   </ul>
+		       	   <br />
 	      </div>
-      </div>
+ 		</div>
 
-      <hr>
+      <hr />
 
       <footer>
         <p>Daniel Sarmiento Suárez. Universidad de Los Andes 2012. From BigData to Content Analysis.</p>
