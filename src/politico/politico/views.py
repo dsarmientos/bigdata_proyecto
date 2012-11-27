@@ -16,19 +16,18 @@ r = redis.StrictRedis(host='localhost', port=6379, db=0)
 def home(request):
     random_person = get_random_person()
     words = get_top_n_terms(250, True)
-    people_list = get_top_n_people(9, True)
-    id_list = [p[0] for p in people_list]
+    id_list = get_top_n_people(9, False)
     names = get_people_name(id_list)
     images = get_people_image(id_list)
     people_words = get_top_people_words(id_list)
     people = []
-    for i, person in enumerate(people_list):
+    for i, person_id in enumerate(id_list):
         if images[i]:
             image = 'http://congresovisible.org' + images[i]
         else:
             image = '/static/img/imagen-perfil.jpg'
         people.append(
-            {'nombre':' '.join(names[i]), 'pk':person[0], 'num_palabras':person[1],
+            {'nombre':' '.join(names[i]), 'pk':person_id,
              'palabras': people_words[i], 'imagen':image})
     return render_to_response(
         'index.html',
@@ -91,14 +90,14 @@ def get_people_image(id_list):
 def get_top_people_words(id_list, withscores=True):
     pipe = r.pipeline(False)
     for id_ in id_list:
-        pipe.zrevrange('indice:congresista:' + id_, 0, 10, withscores)
+        pipe.zrevrange('indice:congresista:' + id_, 0, 9, withscores)
     words = pipe.execute()
     return words
 
 
 def treemap(request):
     #sin presidentes
-    top_people = r.zrevrange('indice:congresista', 2, 201, True)
+    top_people = r.zrevrange('indice:congresista', 2, -1, True)
     rows = []
     partidos = set()
     for person_id, score in top_people:
