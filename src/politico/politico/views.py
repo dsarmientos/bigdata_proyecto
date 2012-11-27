@@ -41,6 +41,10 @@ def home(request):
         {'words': simplejson.dumps(words), 'congresistas':people,
          'random_person':random_person})
 
+def histogram_words(request):
+    words = get_top_n_terms(500, True)
+    scores = [w['size'] for w in words]
+    return render_to_response('histogram.html', {'words':simplejson.dumps(scores)})
 
 def get_random_person():
     pk = r.srandmember('indexados:congresista')
