@@ -61,7 +61,7 @@ def get_random_person():
     else:
         imagen = '/static/img/imagen-perfil.jpg'
     return {'pk': pk, 'nombre': ' '.join(nombres), 'top_word':top_word[0],
-            'rank': rank, 'imagen':imagen}
+            'rank': rank + 1, 'imagen':imagen}
 
 f = lambda f, max_f: (f / max_f)
 
