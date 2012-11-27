@@ -19,14 +19,17 @@ def home(request):
     people_list = get_top_n_people(9, True)
     id_list = [p[0] for p in people_list]
     names = get_people_name(id_list)
+    images = get_people_image(id_list)
     people_words = get_top_people_words(id_list)
     people = []
     for i, person in enumerate(people_list):
+        if images[i]:
+            image = 'http://congresovisible.org' + images[i]
+        else:
+            image = '/static/img/imagen-perfil.jpg'
         people.append(
             {'nombre':' '.join(names[i]), 'pk':person[0], 'num_palabras':person[1],
-             'palabras': people_words[i]})
-    logger.info(people)
-    
+             'palabras': people_words[i], 'imagen':image})
     return render_to_response(
         'index.html',
         {'words': simplejson.dumps(words), 'congresistas':people,
@@ -36,13 +39,19 @@ def home(request):
 def get_random_person():
     pk = r.srandmember('indexados:congresista')
     pipe = r.pipeline(False)
-    pipe.hmget('congresista:' + pk, 'nombres', 'apellidos')
+    pipe.hmget('congresista:' + pk, 'nombres', 'apellidos', 'imagen')
     pipe.zrevrange('indice:congresista:' + pk, 0, 0)
     pipe.zrevrank('indice:congresista', pk)
     result = pipe.execute()
-    nombres, top_word, rank = result
+    nombres_imagen, top_word, rank = result
+    nombres = nombres_imagen[:-1]
+    imagen = nombres_imagen[-1]
+    if imagen:
+        imagen = 'http://congresovisible.org' +  imagen
+    else:
+        imagen = '/static/img/imagen-perfil.jpg'
     return {'pk': pk, 'nombre': ' '.join(nombres), 'top_word':top_word[0],
-            'rank': rank}
+            'rank': rank, 'imagen':imagen}
     
 
 
@@ -71,9 +80,39 @@ def get_people_name(id_list):
     return names
 
 
+def get_people_image(id_list):
+    pipe = r.pipeline(False)
+    for id_ in id_list:
+        pipe.hget('congresista:' + id_, 'imagen')
+    imgs = pipe.execute()
+    return imgs
+
+
 def get_top_people_words(id_list, withscores=True):
     pipe = r.pipeline(False)
     for id_ in id_list:
         pipe.zrevrange('indice:congresista:' + id_, 0, 10, withscores)
     words = pipe.execute()
     return words
+
+
+def treemap(request):
+    #sin presidentes
+    top_people = r.zrevrange('indice:congresista', 2, 201, True)
+    rows = []
+    partidos = set()
+    for person_id, score in top_people:
+        key = 'congresista:' + person_id
+        partido, nombre = r.hmget(key, 'partido_politico', 'nombre_ascii')
+        if not partido:
+            partido = 'Sin Partido'
+        rows.append([nombre, partido, score])
+        partidos.add(partido)
+    table = [
+        ['Congresista', 'Partido', 'Numero de palabras'],
+        ['Todos', None, 0],
+    ]
+    table.extend([[partido, 'Todos', 0] for partido in partidos])
+    table.extend(rows)
+    return render_to_response(
+        'treemap.html', {'treemap': simplejson.dumps(table)})

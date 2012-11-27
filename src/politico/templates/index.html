@@ -50,7 +50,7 @@
       <div class="row">
 	       <div class="span4">
 		       <div class="row">
-		       	   <h2>Palabras Populares</h2>
+		       	   <h2>Palabras</h2>
 		       	   <br />
 		       	   <div style="width:300p; height:310px;"> <!-- Visualizations container -->
 				       <div id="word-cloud"></div>
@@ -73,7 +73,7 @@
 						       <ul class="thumbnails">
 								  <li>
 								    <a href="#" class="thumbnail">
-									    <img src="/static/img/piedad_cordoba.jpg" alt="">
+									    <img src="{{random_person.imagen}}" alt="{{random_person.imagen}}" width="95" height="95" />
 								    </a>
 								  </li>
 								</ul>
@@ -90,7 +90,7 @@
 	      </div>
 	       <div class="span8">
 		       <div class="row">
-		       	   <h2>Congresistas Populares</h2>
+		       	   <h2>Políticos</h2>
 		       	   <br />
 		       		<ul class="media-list" id="cps">
 		       		{% for congresista in congresistas %}
@@ -100,9 +100,9 @@
 		       			<li class="media" id="cp-{{forloop.counter0}}" style="display:none">
 		       			{% endif %}
 		       			    <a class="pull-left" href="#">
-			       			    <img class="media-object" src="/static/img/imagen-perfil.jpg" alt="" />
+			       			    <img class="media-object" src="{{congresista.imagen}}" width="64" height="64" alt="{{congresista.nombre}}" />
 		       			    </a>
-		       			    <h4 class="media-heading">{{congresista.nombre}} - {{congresista.num_palabras}} palabras</h4>
+		       			    <h4 class="media-heading">{{forloop.counter}}. {{congresista.nombre}} - {{congresista.num_palabras}} palabras</h4>
 		       			    <p>
 		       			    {% for palabra in congresista.palabras %}
 			       			    <span class="badge badge-info" title="Asociada {{palabra.1}} veces" style="cursor:hand; cursor:pointer;">
@@ -129,7 +129,7 @@
 						      <img src="/static/img/treemap_main.png" alt="Treemap">
 						      <h3>Treemap</h3>
 						      <p>Visualización <em>treemap</em> de los partidos políticos y congresistas más populares.
-						      <a class="btn btn-primary" href="#">Ver</a></p>
+						      <a class="btn btn-primary" href="{% url treemap %}">Ver</a></p>
 						    </div>
 						    </li>
 					    </ul>
