@@ -148,10 +148,12 @@
         data.addRows(rows);
 
         var table = new google.visualization.Table(document.getElementById('word-table'));
-        var formatter = new google.visualization.NumberFormat(
+        var decimalformatter = new google.visualization.NumberFormat(
 	      {fractionDigits:3});
+        var formatter = new google.visualization.NumberFormat(
+	      {fractionDigits:0});
 	    formatter.format(data, 1); // Apply formatter to second column
-	    formatter.format(data, 2); // Apply formatter to third column
+	    decimalformatter.format(data, 2); // Apply formatter to third column
         table.draw(data, {showRowNumber: true, page:'enable', width:300 });
       }
     </script>

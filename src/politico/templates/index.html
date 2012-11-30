@@ -69,7 +69,7 @@
 			       	   </div>
 		       </div>
 		       <div class="row">
-		       	   <h3>Conzca sus congresistas</h3>
+		       	   <h3>Conozca sus congresistas</h3>
 		       	   <div class="span3 well">
 				       <div class="row">
 					       <div class="span1">
@@ -105,7 +105,7 @@
 		       			    <a class="pull-left" href="{% url perfil_congresista congresista.pk %}">
 			       			    <img class="media-object" src="{{congresista.imagen}}" width="64" height="64" alt="{{congresista.nombre}}" />
 		       			    </a>
-		       			    <h4 class="media-heading">{{forloop.counter}}. {{congresista.nombre}}</h4>
+					    <h4 class="media-heading"><a href="{% url perfil_congresista congresista.pk %}">{{forloop.counter}}. {{congresista.nombre}}</a></h4>
 		       			    <p>
 		       			    {% for palabra in congresista.palabras %}
 			       			    <span class="badge badge-info" title="Asociada {{palabra.1}} veces" style="cursor:hand; cursor:pointer;">
@@ -176,7 +176,7 @@
 	<script>
 	  var fill = d3.scale.category20();
 	  var word_list = {{words|safe}}
-	  var words = word_list.map(function(d) {return {text: d.text, size: 10 + d.size * 90}});
+	  var words = word_list.map(function(d) {return {text: d.text, size: 9 + d.size * 90}});
 	
 	  d3.layout.cloud().size([300, 300])
 	      .words(words)
@@ -219,9 +219,11 @@
 
         var table = new google.visualization.Table(document.getElementById('word-table'));
         var formatter = new google.visualization.NumberFormat(
+	      {fractionDigits:0});
+        var decimalformatter = new google.visualization.NumberFormat(
 	      {fractionDigits:3});
-	    formatter.format(data, 1); // Apply formatter to second column
-	    formatter.format(data, 2); // Apply formatter to third column
+	    formatter.format(data, 1);
+	    decimalformatter.format(data, 2);
         table.draw(data, {showRowNumber: true, page:'enable', width:300 });
       }
     </script>

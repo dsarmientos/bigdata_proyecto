@@ -17,12 +17,12 @@ import nltk
 
 logger = logging.getLogger('console')
 
-r = redis.StrictRedis(host='bigdata-12-f', port=6379, db=0)
+r = redis.StrictRedis(host='bigdata-12-a', port=6379, db=0)
 
 
 def home(request):
     random_person = get_random_person()
-    words = get_top_n_terms(500, True)
+    words = get_top_n_terms(550, True)
     id_list = get_top_n_people(9, False)
     names = get_people_name(id_list)
     images = get_people_image(id_list)
@@ -42,7 +42,7 @@ def home(request):
          'random_person':random_person})
 
 def histogram_words(request):
-    words = get_top_n_terms(500, True)
+    words = get_top_n_terms(550, True)
     scores = [w['size'] for w in words]
     return render_to_response('histogram.html', {'words':simplejson.dumps(scores)})
 
@@ -61,13 +61,12 @@ def get_random_person():
     else:
         imagen = '/static/img/imagen-perfil.jpg'
     return {'pk': pk, 'nombre': ' '.join(nombres), 'top_word':top_word[0],
-            'rank': rank, 'imagen':imagen}
+            'rank': rank + 1, 'imagen':imagen}
 
 f = lambda f, max_f: (f / max_f)
 
 
 def get_top_n_terms(num_terms, withscores=False):
-    assert int(num_terms) > 0
     word_count = r.zrevrange('indice:global', 0, num_terms - 1, withscores)
     max_f = max((wc[1] for wc in word_count))
     word_list = [{'text':wc[0], 'size':f(wc[1], max_f), 'n':wc[1]} for wc in word_count]
@@ -108,8 +107,7 @@ def get_top_people_words(id_list, withscores=True, n=10):
 
 
 def treemap(request):
-    #sin presidentes
-    top_people = r.zrevrange('indice:congresista', 2, -1, True)
+    top_people = r.zrevrange('indice:congresista', 0, -1, True)
     rows = []
     partidos = set()
     table = [
@@ -129,8 +127,7 @@ def treemap(request):
         'treemap.html', {'treemap': simplejson.dumps(table)})
 
 def combochart(request):
-    #sin presidentes
-    top_people = r.zrevrange('indice:congresista', 2, -1, True)
+    top_people = r.zrevrange('indice:congresista', 0, -1, True)
     rows = {}
     for person_id, score in top_people:
         key = 'congresista:' + person_id
@@ -175,7 +172,7 @@ def perfil_congresista(request, congresista_id):
     words = get_top_people_words(id_list, n=350)[0]
     max_f = max((wc[1] for wc in words))
     word_list = [{'text':wc[0], 'size':f(wc[1], max_f), 'n':wc[1]} for wc in words]
-    terms = [w[0] for w in words[1:11]]
+    terms = [w[0] for w in words[:11]]
     related_people = get_related_people(terms, congresista_id)
     if image:
         image = 'http://congresovisible.org' + image
@@ -187,7 +184,7 @@ def perfil_congresista(request, congresista_id):
         'perfil_congresista.html',
         {'words': simplejson.dumps(word_list), 'congresista':congresista, 'related':related_people})
 
- 
+
 def get_related_people(terms, congresista_id):
     related = search(terms, 0, 6)
     with_info = get_related_people_info(related, congresista_id)
