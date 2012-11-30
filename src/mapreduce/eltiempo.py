@@ -163,6 +163,8 @@ class OracionMapper(object):
             utils.remove_accents(w.decode('utf-8'))
             for w in nltk.corpus.stopwords.words(
                 'spanish')]
+        stop_words.extend(['presidente', 'dijo', 'senador', 'partido',
+                           'representante'])
         return stop_words
 
     def add_terms_to(self, terms_tf, person_id, person_name):
