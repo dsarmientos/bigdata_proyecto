@@ -1,3 +1,4 @@
 *.py[co]
 *.swp
 archivos_elespectador.txt
+src/crawler/crawled_data/

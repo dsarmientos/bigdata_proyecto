@@ -6,7 +6,8 @@ from scrapy.contrib.linkextractors.sgml import SgmlLinkExtractor
 
 def extract_filename(url):
     title_re = re.compile(
-        r'(?:http://)?www\.elespectador\.com/noticias/(?:politica|nacional)/articulo-([-\w]+)/?$'
+        r'(?:http://)?www\.elespectador\.com/noticias/'
+        r'(?:politica|nacional)/[-\w]+articulo-([-\w]+)/?$'
     )
     match = title_re.match(url)
     if match:
@@ -24,7 +25,10 @@ class ElEspectadorSpider(CrawlSpider):
     rules = (
         # Parse this pages
         Rule(
-            SgmlLinkExtractor(allow=(r'www.elespectador.com/noticias/(?:politica|nacional)/articulo-[-\w]+/?$')),
+            SgmlLinkExtractor(
+                allow=(
+                    r'www.elespectador.com/noticias/'
+                    r'(?:politica|nacional)/[-\w]+articulo-[-\w]+/?$')),
             callback='parse_page',
             follow=True),
         # Follow this links
